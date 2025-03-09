@@ -13,12 +13,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
-
 model User {
   id                   String    @id @default(cuid())
-  username             String
+  username             String    @unique
   email                String    @unique
   password             String
   ipAddress            String
@@ -42,7 +39,7 @@ model NewsCategory {
 model Article {
   id          String       @id @default(cuid())
   title       String
-  slug String       @unique
+  slug        String       @unique
   description String
   urlToImage  String[]
   categoryId  String
@@ -74,35 +71,33 @@ model Comment {
   User      User     @relation(fields: [userId], references: [id])
 }
 
-
 // bangladesh geo_location
 
-
 model Division {
-  id       String    @id @default(cuid())
-  name     String
-  bn_name  String
-  url      String
+  id        String     @id @default(cuid())
+  name      String
+  bn_name   String
+  url       String
   districts District[]
 }
 
 model District {
-  id         String    @id @default(cuid())
-  division   Division  @relation(fields: [divisionId], references: [id])
-  divisionId String
-  name       String
-  bn_name    String
-  url        String
-  area       Float
-  population Int
-  iso_code   String
+  id          String    @id @default(cuid())
+  division    Division  @relation(fields: [divisionId], references: [id])
+  divisionId  String
+  name        String
+  bn_name     String
+  url         String
+  area        Float
+  population  Int
+  iso_code    String
   established Int
-  upazilas   Upazila[]
+  upazilas    Upazila[]
 }
 
 model Upazila {
-  id         String    @id @default(cuid())
-  district   District  @relation(fields: [districtId], references: [id])
+  id         String   @id @default(cuid())
+  district   District @relation(fields: [districtId], references: [id])
   districtId String
   name       String
   bn_name    String
@@ -111,10 +106,10 @@ model Upazila {
 }
 
 model Union {
-  id       String  @id @default(cuid())
-  upazila  Upazila @relation(fields: [upazilaId], references: [id])
+  id        String  @id @default(cuid())
+  upazila   Upazila @relation(fields: [upazilaId], references: [id])
   upazilaId String
-  name     String
-  bn_name  String
-  url      String
+  name      String
+  bn_name   String
+  url       String
 }
