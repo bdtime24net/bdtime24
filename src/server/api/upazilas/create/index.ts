@@ -20,14 +20,14 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: "Post with this slug already exists" })
       }
   
-      const post = await prisma.upazila.create({
-        data: {
-            ...validatedData.data
-        }
-      })
+    //   const post = await prisma.upazila.create({
+    //     data: {
+    //         ...validatedData.data
+    //     }
+    //   })
       
       
-      return { success: true, post }
+    //   return { success: true, post }
     } catch (error) {
       console.error("Error occurred:", error) 
       return createError({
