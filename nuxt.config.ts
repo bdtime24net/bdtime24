@@ -12,6 +12,7 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
+  plugins: ['~/plugins/vue-query.ts'],
   modules: [
      '@primevue/nuxt-module'
   ],

@@ -1,33 +1,33 @@
 import { defineEventHandler, readBody, createError } from "h3"
 import prisma from "~/server/utils/prisma"
-import {upazilasSchema} from '../validation'
+import {upazilaSchema} from '../validation'
 
 
 
 export default defineEventHandler(async (event) => {
     try {
       const body = await readBody(event)
-      const validatedData = upazilasSchema.safeParse(body)
+      const validatedData = upazilaSchema.safeParse(body)
       if (!validatedData.success) {
         throw createError({ statusCode: 400, message: "Invalid input" })
       }
   
-   // check post already exist
-      const existingPost = await prisma.upazila.findFirst({
+   // check Upazila already exist
+      const existingUpazila = await prisma.upazila.findFirst({
         where: { name: validatedData.data.name },
       })
-      if (existingPost) {
-        throw createError({ statusCode: 400, statusMessage: "Post with this slug already exists" })
+      if (existingUpazila) {
+        throw createError({ statusCode: 400, statusMessage: "Upazila with this name already exists in the district" })
       }
   
-    //   const post = await prisma.upazila.create({
-    //     data: {
-    //         ...validatedData.data
-    //     }
-    //   })
+      const upazila = await prisma.upazila.create({
+        data: {
+            ...validatedData.data
+        }
+      })
       
       
-    //   return { success: true, post }
+      return { success: true, message: "Upazila created successfully",   data: upazila,  }
     } catch (error) {
       console.error("Error occurred:", error) 
       return createError({

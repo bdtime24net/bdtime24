@@ -32,10 +32,10 @@ export default defineEventHandler(async (event) => {
     };
 
     // Fetch total count for pagination
-    const totalCount = await prisma.division.count({ where });
+    const totalCount = await prisma.district.count({ where });
 
     // Fetch articles with filters, pagination, and related data
-    const articles = await prisma.division.findMany({
+    const articles = await prisma.district.findMany({
       where,
       skip,
       take: pageSize

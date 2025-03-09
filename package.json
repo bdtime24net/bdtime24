@@ -10,6 +10,8 @@
     "postinstall": "nuxt prepare && npx prisma generate"
   },
   "dependencies": {
+    "@tanstack/vue-query": "^5.67.2",
+    "axios": "^1.8.2",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.8",
     "h3": "^1.15.1",
@@ -23,14 +25,14 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@primeuix/themes": "^1.0.0",
+    "@primevue/forms": "^4.3.1",
     "@primevue/nuxt-module": "^4.3.1",
     "@prisma/client": "^6.4.1",
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.0.9",
-    "@types/jsonwebtoken": "^9.0.9",
-    "@primeuix/themes": "^1.0.0",
-    "@primevue/forms": "^4.3.1",
     "@tinymce/tinymce-vue": "^5.1.1",
+    "@types/jsonwebtoken": "^9.0.9",
     "@vercel/analytics": "^1.5.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.3",

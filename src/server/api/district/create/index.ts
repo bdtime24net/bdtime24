@@ -1,17 +1,17 @@
-import { defineEventHandler, readBody, createError, getHeader } from "h3";
+import { defineEventHandler, readBody, createError } from "h3";
 import prisma from "~/server/utils/prisma";
-import { divisionSchema } from "../validation";
+import { districtSchema } from "../validation";
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const validatedData = divisionSchema.safeParse(body);
+    const validatedData = districtSchema.safeParse(body);
     if (!validatedData.success) {
       throw createError({ statusCode: 400, message: "Invalid input" });
     }
 
-    // Check if division already exists by name or URL
-    const existingDivision = await prisma.division.findFirst({
+    // Check if district already exists by name or URL
+    const existingDistrict = await prisma.district.findFirst({
       where: {
         OR: [
           { name: validatedData.data.name },
@@ -19,21 +19,21 @@ export default defineEventHandler(async (event) => {
         ],
       },
     });
-    if (existingDivision) {
+    if (existingDistrict) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Division with this name or URL already exists",
+        statusMessage: "District with this name or URL already exists",
       });
     }
 
     // Create a new division
-    const division = await prisma.division.create({
+    const district = await prisma.district.create({
       data: {
         ...validatedData.data,
       },
     });
 
-    return { success: true, message: 'Division created successfully', data: division };
+    return { success: true, message: 'District created successfully', data: district };
   } catch (error) {
     console.error("Error occurred:", error);
     return createError({

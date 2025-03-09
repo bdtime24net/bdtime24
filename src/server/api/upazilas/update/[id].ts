@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from "h3";
-import { upazilasUpdateSchema } from "../validation";
+import { upazilaUpdateSchema } from "../validation";
 import prisma from "~/server/utils/prisma";
 
 export default defineEventHandler(async (event) => {
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
     // Read request body
     const body = await readBody(event);
-    const validatedData = upazilasUpdateSchema.safeParse(body);
+    const validatedData = upazilaUpdateSchema.safeParse(body);
 
     if (!validatedData.success) {
       return createError({
