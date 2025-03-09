@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
+model User {
+  id                   String    @id @default(cuid())
+  username             String
+  email                String    @unique
+  password             String
+  ipAddress            String
+  userAgent            String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  articles             Article[]
+  Comment              Comment[]
+
+  @@map("User")
+}
+
+model NewsCategory {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  articles Article[]
+}
+
+model Article {
+  id          String       @id @default(cuid())
+  title       String
+  slug String       @unique
+  description String
+  urlToImage  String[]
+  categoryId  String
+  userId      String
+  tagId       String
+  publishedAt DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  category    NewsCategory @relation(fields: [categoryId], references: [id])
+  Tag         Tag          @relation(fields: [tagId], references: [id])
+  User        User         @relation(fields: [userId], references: [id])
+  Comment     Comment[]
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  Article   Article[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  articleId String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Article   Article  @relation(fields: [articleId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+
+// bangladesh geo_location
+
+
+model Division {
+  id       String    @id @default(cuid())
+  name     String
+  bn_name  String
+  url      String
+  districts District[]
+}
+
+model District {
+  id         String    @id @default(cuid())
+  division   Division  @relation(fields: [divisionId], references: [id])
+  divisionId String
+  name       String
+  bn_name    String
+  url        String
+  area       Float
+  population Int
+  iso_code   String
+  established Int
+  upazilas   Upazila[]
+}
+
+model Upazila {
+  id         String    @id @default(cuid())
+  district   District  @relation(fields: [districtId], references: [id])
+  districtId String
+  name       String
+  bn_name    String
+  url        String
+  unions     Union[]
+}
+
+model Union {
+  id       String  @id @default(cuid())
+  upazila  Upazila @relation(fields: [upazilaId], references: [id])
+  upazilaId String
+  name     String
+  bn_name  String
+  url      String
+}
