@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CreateDistrict from "~/component/dashboard/District.vue";
+import CreateDistrict from "~/components/dashboard/District.vue";
 </script>
 
 <template>

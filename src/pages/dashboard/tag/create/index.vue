@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DivisionComponent from "~/components/dashboard/Division.vue";
+import DivisionComponent from "~/components/dashboard/tag/CreateTag.vue";
 </script>
 
 <template>

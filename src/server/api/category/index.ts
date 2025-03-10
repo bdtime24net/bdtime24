@@ -18,16 +18,16 @@ export default defineEventHandler(async (event) => {
     });
 
     // Get the total count of tags for pagination info
-    const totalTags = await prisma.newsCategory.count();
+    const totalCategory = await prisma.newsCategory.count();
 
     // Calculate total pages
-    const totalPages = Math.ceil(totalTags / limit);
+    const totalPages = Math.ceil(totalCategory / limit);
 
     return {
       success: true,
       data: tags,
       pagination: {
-        totalTags,
+        totalCategory,
         totalPages,
         currentPage: page,
         pageSize: limit,
