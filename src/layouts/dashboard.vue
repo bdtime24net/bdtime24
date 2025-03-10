@@ -1,7 +1,7 @@
 <template>
     <div>
       <div class="flex">
-        <!-- <Sidebar /> -->
+        <Sidebar />
         <main class="flex-1 p-6">
           <slot />
         </main>
@@ -11,7 +11,7 @@
   </template>
   
   <script setup>
-//   import Sidebar from "@/components/dashboard/Sidebar.vue";
+  import Sidebar from "@/components/dashboard/ui/Sidebar.vue";
     import 'primeicons/primeicons.css'
 //Apply Middleware to All Dashboard Pages
   definePageMeta({ middleware: "auth" });

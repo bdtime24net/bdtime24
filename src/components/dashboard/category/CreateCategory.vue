@@ -104,7 +104,7 @@ const formatDate = (rowData: { createdAt: string | number | Date; }) => {
 
 <template>
   <Toast />
-  <div class="p-6 max-w-3xl mx-auto">
+  <div class=" max-w-3xl mx-auto">
     <!-- Create Category Form -->
     <Card class="shadow-lg rounded-xl">
       <template #title> Create Category </template>

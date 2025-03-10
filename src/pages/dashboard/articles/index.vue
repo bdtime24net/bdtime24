@@ -159,6 +159,8 @@
   
   // Fetch articles on component mount
   fetchArticles();
+
+  definePageMeta({ layout: "dashboard", middleware: "auth", });
   </script>
   
   <style scoped>

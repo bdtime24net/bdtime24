@@ -4,8 +4,8 @@
 
 <script setup lang="ts">
 
-const token = ref<string | null>(null);
 
-console.log(token)
 
+
+definePageMeta({ layout: "dashboard", middleware: "auth", });
 </script>
