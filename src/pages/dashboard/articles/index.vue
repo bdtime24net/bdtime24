@@ -28,7 +28,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">{{ article.Tag.name }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ new Date(article.publishedAt).toLocaleDateString() }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-info" @click="navigateTo(`/dashboard/articles/update/${article.slug}`)" />
+                      <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-info" @click="navigateTo(`/dashboard/articles/update/${article.id}`)" />
                       <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="confirmDeleteArticle(article.id)" />
                     </td>
                   </tr>
@@ -140,9 +140,9 @@
       summary: 'Confirm',
       detail: 'Are you sure you want to delete this article?',
       life: 3000,
-      sticky: true,
-      closable: true,
-      accept: () => deleteArticle(id),
+      // sticky: true,
+      // closable: true,
+      // accept: () => deleteArticle(id),
     });
   };
   

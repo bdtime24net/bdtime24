@@ -3,15 +3,15 @@ import prisma from "~/server/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   try {
-    // Extract slug from the URL parameters
-    const slug = event.context.params?.slug;
-    if (!slug) {
-      throw createError({ statusCode: 400, message: "Slug is required" });
+    // Extract ID from the URL parameters
+    const id = event.context.params?.id;
+    if (!id) {
+      throw createError({ statusCode: 400, message: "Article ID is required" });
     }
 
-    // Fetch the article by slug
+    // Fetch the article by ID
     const article = await prisma.article.findUnique({
-      where: { slug },
+      where: { id },
       include: {
         category: true, // Include category details
         Tag: true, // Include tag details
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     console.error("Error fetching article:", error);
 
     if (error instanceof Error) {
-        return { success: false, error: error.message };
-      }
+      return { success: false, error: error.message };
+    }
   }
 });

@@ -14,7 +14,6 @@ export const createPostSchema = z.object({
 
 // Define Zod validation schema for updating an article
 export const updatePostSchema = z.object({
-    id: z.string(),
     title: z.string().min(1, { message: "Title is required" }).optional(),
     slug: z.string().min(1, { message: "Slug is required" }).optional(),
     description: z.string().min(1, { message: "Description is required" }).optional(),

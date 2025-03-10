@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error("Error updating post:", error);
     if (error instanceof Error) {
-        return { success: false, error: error.message };
-      }
+      return { success: false, error: error.message };
+    }
   }
 });
