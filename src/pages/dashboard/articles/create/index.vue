@@ -1,247 +1,3 @@
-<script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useToast } from "primevue/usetoast";
-import { useMutation, useQuery } from "@tanstack/vue-query";
-import axios from "axios";
-import { useRouter } from "vue-router";
-
-// Form components
-import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
-import Calendar from "primevue/calendar";
-import Dropdown from "primevue/dropdown";
-import MultiSelect from "primevue/multiselect";
-import FileUpload from "primevue/fileupload";
-import Button from "primevue/button";
-import Card from "primevue/card";
-import Toast from "primevue/toast";
-import ProgressSpinner from "primevue/progressspinner";
-import Chips from "primevue/chips";
-
-// Initialize router
-const router = useRouter();
-
-// Form state
-const title = ref("");
-const slug = ref("");
-const description = ref("");
-const imageUrls = ref<string[]>([]);
-const newImageUrl = ref("");
-const categoryId = ref("");
-const tagId = ref("");
-const publishedAt = ref<Date | null>(null);
-const isSubmitting = ref(false);
-const userId = ref<string | null>(null); // Added userId field which is required by the schema
-
-const token = ref<string | null>(null);
-
-// Validation errors
-const errors = ref<Record<string, string>>({});
-
-// Only access localStorage in client-side context
-onMounted(() => {
-  token.value = localStorage.getItem("token");
-  userId.value = localStorage.getItem("userId"); // Get userId from localStorage
-  
-  // Redirect if not authenticated
-  if (!token.value || !userId.value) {
-    toast.add({ severity: "error", summary: "Authentication Error", detail: "User information missing. Please log in again.", life: 3000 });
-    router.push('/auth/login');
-  }
-});
-
-// Toast for notifications
-const toast = useToast();
-
-// Get categories for dropdown
-const { data: categories, isLoading: loadingCategories } = useQuery({
-  queryKey: ["categories"],
-  queryFn: async () => {
-    const response = await axios.get("/api/category", {
-        // headers: {
-        //     Authorization: `Bearer ${token.value}`,
-        // }
-    });
-    return response.data.data || [];
-  },
-});
-
-// Get tags for dropdown
-const { data: tags, isLoading: loadingTags } = useQuery({
-  queryKey: ["tags"],
-  queryFn: async () => {
-    const response = await axios.get("/api/tag", {
-    //   headers: {
-    //     Authorization: `Bearer ${token.value}`,
-    //   }
-    });
-    return response.data.data || [];
-  },
-});
-
-// Auto-generate slug from title
-const generateSlug = () => {
-  if (!title.value) return;
-  slug.value = title.value
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
-};
-
-// Add image URL to the array
-const addImageUrl = () => {
-  if (!newImageUrl.value) {
-    toast.add({ severity: "warn", summary: "Warning", detail: "Please enter a valid image URL", life: 3000 });
-    return;
-  }
-
-  try {
-    // Basic URL validation
-    new URL(newImageUrl.value);
-    imageUrls.value.push(newImageUrl.value);
-    newImageUrl.value = "";
-    // Clear the error for imageUrls if it exists
-    if (errors.value.urlToImage) {
-      delete errors.value.urlToImage;
-    }
-  } catch (e) {
-    toast.add({ severity: "error", summary: "Error", detail: "Invalid URL format", life: 3000 });
-  }
-};
-
-// Remove image URL from array
-const removeImageUrl = (index: number) => {
-  imageUrls.value.splice(index, 1);
-  // If we removed all images, add the error back
-  if (imageUrls.value.length === 0) {
-    errors.value.urlToImage = "At least one image URL is required";
-  }
-};
-
-// Validate the form against the schema requirements
-const validateForm = () => {
-  errors.value = {};
-  
-  // Validate required fields
-  if (!title.value.trim()) {
-    errors.value.title = "Title is required";
-  }
-  
-  if (!slug.value.trim()) {
-    errors.value.slug = "Slug is required";
-  }
-  
-  if (!description.value.trim()) {
-    errors.value.description = "Description is required";
-  }
-  
-  if (imageUrls.value.length === 0) {
-    errors.value.urlToImage = "At least one image URL is required";
-  }
-  
-  if (!categoryId.value) {
-    errors.value.categoryId = "Category ID is required";
-  }
-  
-  if (!tagId.value) {
-    errors.value.tagId = "Tag ID is required";
-  }
-  
-  if (!userId.value) {
-    errors.value.userId = "User ID is required";
-  }
-  
-  return Object.keys(errors.value).length === 0;
-};
-
-// Create article mutation
-const createArticle = useMutation({
-  mutationFn: async () => {
-    if (!token.value) {
-      toast.add({ severity: 'error', summary: 'Unauthorized', detail: 'Please log in to create a post.', life: 3000 });
-      throw new Error('Unauthorized');
-    }
-    
-    if (!userId.value) {
-      toast.add({ severity: 'error', summary: 'User Error', detail: 'User ID is missing.', life: 3000 });
-      throw new Error('User ID missing');
-    }
-    
-    const articleData = {
-      title: title.value,
-      slug: slug.value,
-      description: description.value,
-      urlToImage: imageUrls.value,
-      categoryId: categoryId.value,
-      tagId: tagId.value,
-      userId: userId.value, // Including the userId as required by the schema
-      publishedAt: publishedAt.value,
-      updatedAt: new Date() // Adding updatedAt field
-    };
-
-    const response = await axios.post("/api/article/create", articleData, {
-      headers: {
-        Authorization: `Bearer ${token.value}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.data;
-  },
-  onSuccess: (data) => {
-    toast.add({ severity: "success", summary: "Success", detail: "Article created successfully!", life: 3000 });
-    resetForm();
-    router.push("/dashboard/articles");
-  },
-  onError: (error: any) => {
-    if (error.response?.status === 400 && error.response?.data?.message) {
-      // Handle validation errors from the server
-      toast.add({ severity: "error", summary: "Validation Error", detail: error.response.data.message, life: 5000 });
-    } else {
-      const errorMessage = error?.response?.data?.statusMessage || "Failed to create article";
-      toast.add({ severity: "error", summary: "Error", detail: errorMessage, life: 5000 });
-    }
-    isSubmitting.value = false;
-  },
-});
-
-// Submit form
-const handleSubmit = () => {
-  if (validateForm()) {
-    isSubmitting.value = true;
-    createArticle.mutate();
-  } else {
-    toast.add({ severity: "warn", summary: "Validation Error", detail: "Please fix the errors in the form", life: 3000 });
-    isSubmitting.value = false;
-  }
-};
-
-// Reset form
-const resetForm = () => {
-  title.value = "";
-  slug.value = "";
-  description.value = "";
-  imageUrls.value = [];
-  newImageUrl.value = "";
-  categoryId.value = "";
-  tagId.value = "";
-  publishedAt.value = null;
-  isSubmitting.value = false;
-  errors.value = {};
-};
-
-// Form validation status
-const isFormValid = computed(() => {
-  return validateForm();
-});
-
-// Define navigation function
-const navigateTo = (path: string) => {
-  router.push(path);
-};
-
-// definePageMeta({ layout: "dashboard", middleware: "auth" });
-</script>
-
 <template>
   <div>
     <Toast />
@@ -362,19 +118,6 @@ const navigateTo = (path: string) => {
               </div>
             </div>
             
-            <!-- Published Date -->
-            <div class="space-y-2">
-              <label for="publishedDate" class="block text-sm font-medium text-gray-700">Publication Date (Optional)</label>
-              <Calendar 
-                id="publishedDate" 
-                v-model="publishedAt" 
-                dateFormat="dd/mm/yy" 
-                placeholder="Select date" 
-                showIcon 
-                class="w-full" 
-              />
-            </div>
-            
             <!-- Form Actions -->
             <div class="flex justify-end space-x-3 pt-4 border-t">
               <Button 
@@ -388,8 +131,6 @@ const navigateTo = (path: string) => {
                 type="submit" 
                 label="Create Article" 
                 icon="pi pi-check" 
-                :loading="createArticle.isLoading" 
-                :disabled="createArticle.isLoading" 
               />
             </div>
           </form>
@@ -398,3 +139,234 @@ const navigateTo = (path: string) => {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import { useToast } from "primevue/usetoast";
+import { useMutation, useQuery } from "@tanstack/vue-query";
+import axios from "axios";
+import { useRouter } from "vue-router";
+
+// Form components
+import InputText from "primevue/inputtext";
+import Textarea from "primevue/textarea";
+import Dropdown from "primevue/dropdown";
+import Button from "primevue/button";
+import Card from "primevue/card";
+import Toast from "primevue/toast";
+
+// Initialize router
+const router = useRouter();
+
+// Form state
+const title = ref("");
+const slug = ref("");
+const description = ref("");
+const imageUrls = ref<string[]>([]);
+const newImageUrl = ref("");
+const categoryId = ref("");
+const tagId = ref("");
+const isSubmitting = ref(false);
+
+
+const token = ref<string | null>(null);
+
+// Validation errors
+const errors = ref<Record<string, string>>({});
+
+// Only access localStorage in client-side context
+onMounted(() => {
+  token.value = localStorage.getItem("token");
+ 
+});
+
+// Toast for notifications
+const toast = useToast();
+
+// Get categories for dropdown
+const { data: categories, isLoading: loadingCategories } = useQuery({
+  queryKey: ["categories"],
+  queryFn: async () => {
+    const response = await axios.get("/api/category", {
+        // headers: {
+        //     Authorization: `Bearer ${token.value}`,
+        // }
+    });
+    return response.data.data || [];
+  },
+});
+
+// Get tags for dropdown
+const { data: tags, isLoading: loadingTags } = useQuery({
+  queryKey: ["tags"],
+  queryFn: async () => {
+    const response = await axios.get("/api/tag", {
+    //   headers: {
+    //     Authorization: `Bearer ${token.value}`,
+    //   }
+    });
+    return response.data.data || [];
+  },
+});
+
+// Auto-generate slug from title
+const generateSlug = () => {
+  if (!title.value) return;
+  slug.value = title.value
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+};
+
+// Add image URL to the array
+const addImageUrl = () => {
+  if (!newImageUrl.value) {
+    toast.add({ severity: "warn", summary: "Warning", detail: "Please enter a valid image URL", life: 3000 });
+    return;
+  }
+
+  try {
+    // Basic URL validation
+    new URL(newImageUrl.value);
+    imageUrls.value.push(newImageUrl.value);
+    newImageUrl.value = "";
+    // Clear the error for imageUrls if it exists
+    if (errors.value.urlToImage) {
+      delete errors.value.urlToImage;
+    }
+  } catch (e) {
+    toast.add({ severity: "error", summary: "Error", detail: "Invalid URL format", life: 3000 });
+  }
+};
+
+// Remove image URL from array
+const removeImageUrl = (index: number) => {
+  imageUrls.value.splice(index, 1);
+  // If we removed all images, add the error back
+  if (imageUrls.value.length === 0) {
+    errors.value.urlToImage = "At least one image URL is required";
+  }
+};
+
+// Validate the form against the schema requirements
+const validateForm = () => {
+  errors.value = {};
+  
+  // Validate required fields
+  if (!title.value.trim()) {
+    errors.value.title = "Title is required";
+  }
+  
+  if (!slug.value.trim()) {
+    errors.value.slug = "Slug is required";
+  }
+  
+  if (!description.value.trim()) {
+    errors.value.description = "Description is required";
+  }
+  
+  if (imageUrls.value.length === 0) {
+    errors.value.urlToImage = "At least one image URL is required";
+  }
+  
+  if (!categoryId.value) {
+    errors.value.categoryId = "Category ID is required";
+  }
+  
+  if (!tagId.value) {
+    errors.value.tagId = "Tag ID is required";
+  }
+
+  // Debugging output
+  console.log("Form validation errors:", errors.value);
+
+  
+  return Object.keys(errors.value).length === 0;
+};
+
+// Create article mutation
+const createArticle = useMutation({
+  mutationFn: async () => {
+    if (!token.value) {
+      toast.add({ severity: 'error', summary: 'Unauthorized', detail: 'Please log in to create a post.', life: 3000 });
+      throw new Error('Unauthorized');
+    }
+    
+    
+    
+    const articleData = {
+      title: title.value,
+      slug: slug.value,
+      description: description.value,
+      urlToImage: imageUrls.value,
+      categoryId: categoryId.value,
+      tagId: tagId.value,
+    };
+
+    const response = await axios.post("/api/article/create", articleData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.value}`,
+      }
+    });
+    console.log("My data:>", response.data);
+    return response.data;
+
+
+  },
+  onSuccess: (data) => {
+    toast.add({ severity: "success", summary: "Success", detail: "Article created successfully!", life: 3000 });
+    resetForm();
+    router.push("/dashboard/articles");
+  },
+  onError: (error: any) => {
+    if (error.response?.status === 400 && error.response?.data?.message) {
+      // Handle validation errors from the server
+      toast.add({ severity: "error", summary: "Validation Error", detail: error.response.data.message, life: 5000 });
+    } else {
+      const errorMessage = error?.response?.data?.statusMessage || "Failed to create article";
+      toast.add({ severity: "error", summary: "Error", detail: errorMessage, life: 5000 });
+    }
+    isSubmitting.value = false;
+  },
+});
+
+// Submit form
+const handleSubmit = () => {
+  if (validateForm()) {
+    isSubmitting.value = true;
+    createArticle.mutate();
+  } else {
+    toast.add({ severity: "warn", summary: "Validation Error", detail: "Please fix the errors in the form", life: 3000 });
+    isSubmitting.value = false;
+  }
+};
+
+console.log('Form Valid:', validateForm());
+
+
+// Reset form
+const resetForm = () => {
+  title.value = "";
+  slug.value = "";
+  description.value = "";
+  imageUrls.value = [];
+  newImageUrl.value = "";
+  categoryId.value = "";
+  tagId.value = "";
+  isSubmitting.value = false;
+  errors.value = {};
+};
+
+// Form validation status
+const isFormValid = computed(() => {
+  return validateForm();
+});
+
+// Define navigation function
+const navigateTo = (path: string) => {
+  router.push(path);
+};
+
+definePageMeta({ layout: "dashboard", middleware: "auth" });
+</script>
