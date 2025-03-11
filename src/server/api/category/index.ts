@@ -3,41 +3,37 @@ import prisma from "~/server/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   try {
-    // Extract pagination parameters from query (e.g., ?page=1&limit=10)
+    // Extract pagination parameters
     const query = getQuery(event);
-    const page = parseInt(query.page as string) || 1;  // Default to page 1 if not provided
-    const limit = parseInt(query.limit as string) || 10; // Default to 10 items per page if not provided
-
-    // Calculate the offset for pagination
+    const page = Math.max(1, parseInt(query.page as string) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(query.pageSize as string) || 10));
     const skip = (page - 1) * limit;
 
-    // Fetch the paginated tags from the database
-    const tags = await prisma.newsCategory.findMany({
+    // Fetch paginated categories
+    const categories = await prisma.newsCategory.findMany({
       skip,
       take: limit,
+      orderBy: { publishedAt: 'desc' },
     });
 
-    // Get the total count of tags for pagination info
-    const totalCategory = await prisma.newsCategory.count();
+    // Get the total count of categories
+    const totalCategories = await prisma.newsCategory.count();
 
     // Calculate total pages
-    const totalPages = Math.ceil(totalCategory / limit);
+    const totalPages = Math.ceil(totalCategories / limit);
 
     return {
       success: true,
-      data: tags,
+      data: categories,
       pagination: {
-        totalCategory,
+        totalCategories,
         totalPages,
         currentPage: page,
         pageSize: limit,
       },
     };
   } catch (error) {
-    console.error("Error occurred:", error);
-    return createError({
-      statusCode: 500,
-      statusMessage: "Internal Server Error",
-    });
+    console.error("Error fetching categories:", error);
+    return createError({ statusCode: 500, statusMessage: "Internal Server Error" });
   }
 });

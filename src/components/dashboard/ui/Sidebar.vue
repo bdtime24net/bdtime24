@@ -1,134 +1,51 @@
-<template>
-  <div class="sidebar-container transition-all duration-300">
-    <Menu :model="items" class="w-full md:w-64 lg:w-72 shadow-md rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <!-- Submenu Label Template with Enhanced Styling -->
-      <template #submenulabel="{ item }">
-        <div class="flex items-center py-2 px-3 text-blue-600 dark:text-blue-400 font-medium">
-          <span v-if="item.icon" :class="[item.icon, 'mr-2']"></span>
-          <span>{{ item.label }}</span>
-        </div>
-      </template>
-      
-      <!-- Menu Item Template with Enhanced Styling -->
-      <template #item="{ item, props }">
-        <router-link v-if="item.to" 
-                    v-ripple 
-                    :to="item.to" 
-                    custom 
-                    v-slot="{ navigate, isActive }">
-          <a @click="navigate" 
-             :class="['flex items-center py-2 px-3 rounded-md transition-colors duration-200', 
-                     isActive ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 
-                     'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800']"
-             v-bind="props.action">
-            <span v-if="item.icon" :class="[item.icon, 'mr-2', isActive ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400']"></span>
-            <span>{{ item.label }}</span>
-            <Badge v-if="item.badge" 
-                  class="ml-auto bg-blue-500 text-white px-2 py-1 text-xs rounded-full" 
-                  :value="item.badge" />
-            <span v-if="item.shortcut" 
-                  class="ml-auto text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded">
-              {{ item.shortcut }}
-            </span>
-          </a>
-        </router-link>
-        
-        <a v-else-if="item.url" 
-           v-ripple 
-           :href="item.url" 
-           :target="item.target || '_self'"
-           class="flex items-center py-2 px-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-200" 
-           v-bind="props.action">
-          <span v-if="item.icon" :class="[item.icon, 'mr-2 text-gray-500 dark:text-gray-400']"></span>
-          <span>{{ item.label }}</span>
-          <i v-if="item.target === '_blank'" class="pi pi-external-link ml-2 text-xs text-gray-400"></i>
-          <Badge v-if="item.badge" 
-                 class="ml-auto bg-blue-500 text-white px-2 py-1 text-xs rounded-full" 
-                 :value="item.badge" />
-          <span v-if="item.shortcut" 
-                class="ml-auto text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded">
-            {{ item.shortcut }}
-          </span>
-        </a>
-        
-        <a v-else 
-           v-ripple 
-           class="flex items-center py-2 px-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-200" 
-           v-bind="props.action"
-           @click="item.command ? item.command() : undefined">
-          <span v-if="item.icon" :class="[item.icon, 'mr-2 text-gray-500 dark:text-gray-400']"></span>
-          <span>{{ item.label }}</span>
-          <Badge v-if="item.badge" 
-                 class="ml-auto bg-blue-500 text-white px-2 py-1 text-xs rounded-full" 
-                 :value="item.badge" />
-          <span v-if="item.shortcut" 
-                class="ml-auto text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded">
-            {{ item.shortcut }}
-          </span>
-        </a>
-      </template>
-      
-      <!-- User Profile at Bottom -->
-      <template #end>
-        <div class="border-t border-gray-200 dark:border-gray-700 mt-2">
-          <router-link to="/profile" custom v-slot="{ navigate }">
-            <button v-ripple 
-                    @click="navigate"
-                    class="w-full flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
-              <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" 
-                      class="mr-3" 
-                      size="large" 
-                      shape="circle" />
-              <div class="flex flex-col items-start">
-                <span class="font-medium text-gray-800 dark:text-gray-200">Amy Elsner</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">Administrator</span>
-              </div>
-              <i class="pi pi-angle-down ml-auto text-gray-400"></i>
-            </button>
-          </router-link>
-        </div>
-      </template>
-    </Menu>
-  </div>
-</template>
-
 <script setup>
 import { ref } from "vue";
+import Drawer from 'primevue/drawer';
+import Button from 'primevue/button';
+import Avatar from 'primevue/avatar';
 
-// Comprehensive menu items with complete route navigation
-const items = ref([
+// Define the reactive state for visibility
+const visible = ref(false);
+
+// Define the menu items structure with links
+const menuItems = [
   {
-    label: 'Dashboard',
-    icon: 'pi pi-home',
-    to: '/dashboard'
-  },
-  {
-    label: 'Analytics',
-    icon: 'pi pi-chart-bar',
-    to: '/dashboard/analytics'
-  },
-  {
-    separator: true
-  },
-  {
-    label: 'Posts',
-    icon: 'pi pi-folder',
+    label: "FAVORITES",
+    icon: "pi pi-chevron-down",
     items: [
+      { label: "Dashboard", icon: "pi pi-home", link: "/dashboard" },
+      { label: "Bookmarks", icon: "pi pi-bookmark", link: "/bookmarks" },
       {
-        label: 'Posts',
-        icon: 'pi pi-file',
-        to: '/dashboard/post'
+        label: "Reports",
+        icon: "pi pi-chart-line",
+        link: "/reports",
+        items: [
+          { label: "Revenue", icon: "pi pi-chart-line", link: "/reports/revenue", items: [{ label: "View", icon: "pi pi-table", link: "/reports/revenue/view" }, { label: "Search", icon: "pi pi-search", link: "/reports/revenue/search" }] },
+          { label: "Expenses", icon: "pi pi-chart-line", link: "/reports/expenses" }
+        ]
       },
+      { label: "Team", icon: "pi pi-users", link: "/team" },
+      { label: "Messages", icon: "pi pi-comments", badge: 3, link: "/messages" },
+      { label: "Calendar", icon: "pi pi-calendar", link: "/calendar" },
+      { label: "Settings", icon: "pi pi-cog", link: "/settings" }
+    ]
+  },
+  {
+    label: "APPLICATION",
+    icon: "pi pi-chevron-down",
+    items: [
+      { label: "Tags", icon: "pi pi-folder", link: "/dashboard/tag" },
+      { label: "Category", icon: "pi pi-chart-bar", link: "/dashboard/category" },
+      { label: "Geo-Location", icon: "pi pi-map-marker", link: "/dashboard/geo/create" },
       {
-        label: 'New Post',
-        icon: 'pi pi-plus',
-        shortcut: '⌘+N',
-        to: '/dashboard/post/create'
-      },
-      {
+        label: "Article",
+        icon: "pi pi-file",
+        link: "/dashboard/articles",
+        items: [
+          { label: " Create Articles", icon: "pi pi-plus", link: "/dashboard/articles/create" },
+          {
         label: 'Search Files',
         icon: 'pi pi-search',
-        shortcut: '⌘+S',
         to: '/dashboard/post/search'
       },
       {
@@ -151,9 +68,9 @@ const items = ref([
         icon: 'pi pi-trash',
         to: '/dashboard/post/trash'
       }
-    ]
-  },
-  {
+        ]
+      },
+      {
     label: 'Projects',
     icon: 'pi pi-briefcase',
     items: [
@@ -264,50 +181,118 @@ const items = ref([
       // Example: router.push('/login');
     }
   }
-]);
+    ]
+  }
+];
 
+// State to track which sections are expanded
+const expandedSections = ref({});
 
+// Function to toggle submenu visibility
+const toggleSection = (sectionKey) => {
+  expandedSections.value = {
+    ...expandedSections.value,
+    [sectionKey]: !expandedSections.value[sectionKey]
+  };
+};
+
+// Function to toggle nested submenu
+const toggleSubMenu = (event, sectionKey) => {
+  event.stopPropagation();
+  toggleSection(sectionKey);
+};
 </script>
 
-<style scoped>
-/* Optional - Add any additional custom styles here if needed */
-.sidebar-container :deep(.p-menu) {
-  border: none;
-  background: transparent;
-  width: 100%;
-}
-
-.sidebar-container :deep(.p-menuitem-separator) {
-  margin: 0.5rem 0;
-  border-top: 1px solid rgb(229 231 235 / 1);
-}
-
-.dark .sidebar-container :deep(.p-menuitem-separator) {
-  border-top-color: rgb(55 65 81 / 1);
-}
-
-/* Ensure proper avatar sizing */
-.sidebar-container :deep(.p-avatar.p-avatar-large) {
-  width: 2.5rem;
-  height: 2.5rem;
-}
-
-/* Enhance responsive behavior */
-@media (max-width: 768px) {
-  .sidebar-container :deep(.p-avatar.p-avatar-large) {
-    width: 2rem;
-    height: 2rem;
-  }
-}
-
-/* Active route styling */
-.sidebar-container :deep(.router-link-active) {
-  background-color: rgb(239 246 255 / 1);
-  color: rgb(37 99 235 / 1);
-}
-
-.dark .sidebar-container :deep(.router-link-active) {
-  background-color: rgba(30, 58, 138, 0.3);
-  color: rgb(96 165 250 / 1);
-}
-</style>
+<template>
+  <div class="card flex justify-center">
+    <Drawer v-model:visible="visible">
+      <template #container="{ closeCallback }">
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between px-6 pt-4 shrink-0">
+            <span class="inline-flex items-center gap-2">
+              <svg width="35" height="40" viewBox="0 0 35 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M25.87 18.05L23.16 17.45L25.27 20.46V29.78L32.49 23.76V13.53L29.18 14.73L25.87 18.04V18.05ZM25.27 35.49L29.18 31.58V27.67L25.27 30.98V35.49ZM20.16 17.14H20.03H20.17H20.16ZM30.1 5.19L34.89 4.81L33.08 12.33L24.1 15.67L30.08 5.2L30.1 5.19ZM5.72 14.74L2.41 13.54V23.77L9.63 29.79V20.47L11.74 17.46L9.03 18.06L5.72 14.75V14.74ZM9.63 30.98L5.72 27.67V31.58L9.63 35.49V30.98ZM4.8 5.2L10.78 15.67L1.81 12.33L0 4.81L4.79 5.19L4.8 5.2ZM24.37 21.05V34.59L22.56 37.29L20.46 39.4H14.44L12.34 37.29L10.53 34.59V21.05L12.42 18.23L17.45 26.8L22.48 18.23L24.37 21.05ZM22.85 0L22.57 0.69L17.45 13.08L12.33 0.69L12.05 0H22.85Z"
+                  fill="var(--p-primary-color)"
+                />
+                <path
+                  d="M30.69 4.21L24.37 4.81L22.57 0.69L22.86 0H26.48L30.69 4.21ZM23.75 5.67L22.66 3.08L18.05 14.24V17.14H19.7H20.03H20.16H20.2L24.1 15.7L30.11 5.19L23.75 5.67ZM4.21002 4.21L10.53 4.81L12.33 0.69L12.05 0H8.43002L4.22002 4.21H4.21002ZM21.9 17.4L20.6 18.2H14.3L13 17.4L12.4 18.2L12.42 18.23L17.45 26.8L22.48 18.23L22.5 18.2L21.9 17.4ZM4.79002 5.19L10.8 15.7L14.7 17.14H14.74H15.2H16.85V14.24L12.24 3.09L11.15 5.68L4.79002 5.2V5.19Z"
+                  fill="var(--p-text-color)"
+                />
+              </svg>
+              <span class="font-semibold text-2xl text-primary">Your Logo</span>
+            </span>
+            <span>
+              <Button type="button" @click="closeCallback" icon="pi pi-times" rounded outlined></Button>
+            </span>
+          </div>
+          <div class="overflow-y-auto">
+            <ul class="list-none p-4 m-0">
+              <li v-for="(menuItem, mIndex) in menuItems" :key="menuItem.label">
+                <div
+                  @click="toggleSection('menu_' + mIndex)"
+                  class="p-4 flex items-center justify-between text-surface-500 dark:text-surface-400 cursor-pointer"
+                >
+                  <span class="font-medium">{{ menuItem.label }}</span>
+                  <i :class="[
+                    'pi',
+                    expandedSections['menu_' + mIndex] ? 'pi-chevron-up' : 'pi-chevron-down'
+                  ]"></i>
+                </div>
+                <ul 
+                  v-if="menuItem.items" 
+                  class="list-none p-0 m-0 overflow-hidden transition-all duration-300"
+                  :class="[
+                    expandedSections['menu_' + mIndex] ? 'max-h-screen' : 'max-h-0'
+                  ]"
+                >
+                  <li v-for="(subItem, sIndex) in menuItem.items" :key="subItem.label">
+                    <div class="flex items-center w-full">
+                      <a :href="subItem.link" class="flex items-center flex-grow cursor-pointer p-4 rounded text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors">
+                        <i :class="subItem.icon + ' mr-2'"></i>
+                        <span class="font-medium">{{ subItem.label }}</span>
+                        <span v-if="subItem.badge" class="inline-flex items-center justify-center ml-auto bg-primary text-primary-contrast rounded-full" style="min-width: 1.5rem; height: 1.5rem">{{ subItem.badge }}</span>
+                      </a>
+                      <button 
+                        v-if="subItem.items" 
+                        @click="toggleSubMenu($event, 'submenu_' + mIndex + '_' + sIndex)"
+                        class="p-2 ml-2 rounded hover:bg-surface-100 dark:hover:bg-surface-800"
+                      >
+                        <i :class="[
+                          'pi',
+                          expandedSections['submenu_' + mIndex + '_' + sIndex] ? 'pi-chevron-up' : 'pi-chevron-down'
+                        ]"></i>
+                      </button>
+                    </div>
+                    <ul 
+                      v-if="subItem.items" 
+                      class="list-none py-0 pl-4 pr-0 m-0 transition-all duration-300"
+                      :class="[
+                        expandedSections['submenu_' + mIndex + '_' + sIndex] ? 'max-h-screen' : 'max-h-0 overflow-hidden'
+                      ]"
+                    >
+                      <li v-for="nestedItem in subItem.items" :key="nestedItem.label">
+                        <a :href="nestedItem.link" class="flex items-center cursor-pointer p-4 rounded text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors">
+                          <i :class="nestedItem.icon + ' mr-2'"></i>
+                          <span class="font-medium">{{ nestedItem.label }}</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-auto">
+            <hr class="mb-4 mx-4 border-t border-surface-200 dark:border-surface-700" />
+            <a href="/dashboard/profile" class="m-4 flex items-center cursor-pointer p-4 gap-2 rounded text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors">
+              <Avatar image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle" />
+              <span class="font-bold">Amy Elsner</span>
+            </a>
+          </div>
+        </div>
+      </template>
+    </Drawer>
+    <Button icon="pi pi-bars" @click="visible = true" />
+  </div>
+</template>

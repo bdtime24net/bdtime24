@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import DivisionComponent from "~/components/dashboard/tag/CreateTag.vue";
+
+definePageMeta({ layout: "dashboard", middleware: "auth", });
 </script>
 
 <template>

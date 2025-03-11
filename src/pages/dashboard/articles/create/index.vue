@@ -42,12 +42,16 @@
             <!-- Description -->
             <div class="space-y-2">
               <label for="description" class="block text-sm font-medium text-gray-700">Description *</label>
-              <Textarea 
+              <Editor
                 id="description" 
                 v-model="description" 
-                rows="4" 
+                  api-key="process.env.VUE_APP_TINYMCE_API_KEY"
                 placeholder="Article description" 
-                class="w-full" 
+                :init="{
+        toolbar_mode: 'sliding',
+        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+      }"
                 :class="{ 'p-invalid': errors.description }"
               />
               <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
@@ -83,38 +87,75 @@
               </ul>
             </div>
             
-            <!-- Category and Tag selection -->
+            <!-- Primary Category and Tag selection -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-2">
-                <label for="category" class="block text-sm font-medium text-gray-700">Category *</label>
+                <label for="category" class="block text-sm font-medium text-gray-700">Primary Category *</label>
                 <Dropdown
                   id="category"
                   v-model="categoryId"
                   :options="categories"
                   optionLabel="name"
                   optionValue="id"
-                  placeholder="Select a category"
+                  placeholder="Select a primary category"
                   class="w-full"
                   :class="{ 'p-invalid': errors.categoryId }"
                   :loading="loadingCategories"
+                  :filter="true"
                 />
                 <small v-if="errors.categoryId" class="p-error">{{ errors.categoryId }}</small>
               </div>
               
               <div class="space-y-2">
-                <label for="tag" class="block text-sm font-medium text-gray-700">Tag *</label>
+                <label for="tag" class="block text-sm font-medium text-gray-700">Primary Tag *</label>
                 <Dropdown
                   id="tag"
                   v-model="tagId"
                   :options="tags"
                   optionLabel="name"
                   optionValue="id"
-                  placeholder="Select a tag"
+                  placeholder="Select a primary tag"
                   class="w-full"
                   :class="{ 'p-invalid': errors.tagId }"
                   :loading="loadingTags"
+                  :filter="true"
                 />
                 <small v-if="errors.tagId" class="p-error">{{ errors.tagId }}</small>
+              </div>
+            </div>
+            
+            <!-- Additional Categories and Tags for future use -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+              <div class="space-y-2">
+                <label for="additionalCategories" class="block text-sm font-medium text-gray-700">Additional Categories (Coming Soon)</label>
+                <MultiSelect
+                  id="additionalCategories"
+                  v-model="additionalCategories"
+                  :options="categories"
+                  optionLabel="name"
+                  optionValue="id"
+                  placeholder="Select additional categories"
+                  display="chip"
+                  class="w-full"
+                  :disabled="true"
+                />
+                <small class="text-gray-500 italic">This feature requires database update</small>
+              </div>
+              
+              <div class="space-y-2">
+                <label for="additionalTags" class="block text-sm font-medium text-gray-700">Additional Tags (Coming Soon)</label>
+                <MultiSelect
+                  id="additionalTags"
+                  v-model="additionalTags"
+                  :options="tags"
+                  optionLabel="name"
+                  optionValue="id"
+                  placeholder="Select additional tags"
+                  display="chip"
+                  class="w-full"
+                  :disabled="true"
+                />
+                <small class="text-gray-500 italic">This feature requires database update</small>
               </div>
             </div>
             
@@ -131,6 +172,7 @@
                 type="submit" 
                 label="Create Article" 
                 icon="pi pi-check" 
+                :loading="isSubmitting"
               />
             </div>
           </form>
@@ -149,11 +191,13 @@ import { useRouter } from "vue-router";
 
 // Form components
 import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
 import Dropdown from "primevue/dropdown";
+import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import Card from "primevue/card";
 import Toast from "primevue/toast";
+
+import Editor from '@tinymce/tinymce-vue'
 
 // Initialize router
 const router = useRouter();
@@ -166,8 +210,9 @@ const imageUrls = ref<string[]>([]);
 const newImageUrl = ref("");
 const categoryId = ref("");
 const tagId = ref("");
+const additionalCategories = ref<string[]>([]);
+const additionalTags = ref<string[]>([]);
 const isSubmitting = ref(false);
-
 
 const token = ref<string | null>(null);
 
@@ -177,7 +222,6 @@ const errors = ref<Record<string, string>>({});
 // Only access localStorage in client-side context
 onMounted(() => {
   token.value = localStorage.getItem("token");
- 
 });
 
 // Toast for notifications
@@ -187,11 +231,7 @@ const toast = useToast();
 const { data: categories, isLoading: loadingCategories } = useQuery({
   queryKey: ["categories"],
   queryFn: async () => {
-    const response = await axios.get("/api/category", {
-        // headers: {
-        //     Authorization: `Bearer ${token.value}`,
-        // }
-    });
+    const response = await axios.get("/api/category");
     return response.data.data || [];
   },
 });
@@ -200,11 +240,7 @@ const { data: categories, isLoading: loadingCategories } = useQuery({
 const { data: tags, isLoading: loadingTags } = useQuery({
   queryKey: ["tags"],
   queryFn: async () => {
-    const response = await axios.get("/api/tag", {
-    //   headers: {
-    //     Authorization: `Bearer ${token.value}`,
-    //   }
-    });
+    const response = await axios.get("/api/tag");
     return response.data.data || [];
   },
 });
@@ -213,9 +249,10 @@ const { data: tags, isLoading: loadingTags } = useQuery({
 const generateSlug = () => {
   if (!title.value) return;
   slug.value = title.value
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
+  .toLowerCase()
+      .replace(/[^\w\s\-\u0980-\u09FF]/g, '') 
+      .replace(/\s+/g, '-')                   
+      .trim();     
 };
 
 // Add image URL to the array
@@ -270,17 +307,13 @@ const validateForm = () => {
   }
   
   if (!categoryId.value) {
-    errors.value.categoryId = "Category ID is required";
+    errors.value.categoryId = "Category is required";
   }
   
   if (!tagId.value) {
-    errors.value.tagId = "Tag ID is required";
+    errors.value.tagId = "Tag is required";
   }
 
-  // Debugging output
-  console.log("Form validation errors:", errors.value);
-
-  
   return Object.keys(errors.value).length === 0;
 };
 
@@ -292,27 +325,26 @@ const createArticle = useMutation({
       throw new Error('Unauthorized');
     }
     
-    
-    
+    // Prepare data matching your schema structure
     const articleData = {
       title: title.value,
       slug: slug.value,
       description: description.value,
       urlToImage: imageUrls.value,
-      categoryId: categoryId.value,
-      tagId: tagId.value,
+      categoryId: categoryId.value,  // Single categoryId as per schema
+      tagId: tagId.value,           // Single tagId as per schema
     };
 
+    console.log("Sending article data:", articleData);
+    
     const response = await axios.post("/api/article/create", articleData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token.value}`,
       }
     });
-    console.log("My data:>", response.data);
+    
     return response.data;
-
-
   },
   onSuccess: (data) => {
     toast.add({ severity: "success", summary: "Success", detail: "Article created successfully!", life: 3000 });
@@ -320,8 +352,9 @@ const createArticle = useMutation({
     router.push("/dashboard/articles");
   },
   onError: (error: any) => {
+    console.error("Error creating article:", error);
+    
     if (error.response?.status === 400 && error.response?.data?.message) {
-      // Handle validation errors from the server
       toast.add({ severity: "error", summary: "Validation Error", detail: error.response.data.message, life: 5000 });
     } else {
       const errorMessage = error?.response?.data?.statusMessage || "Failed to create article";
@@ -342,9 +375,6 @@ const handleSubmit = () => {
   }
 };
 
-console.log('Form Valid:', validateForm());
-
-
 // Reset form
 const resetForm = () => {
   title.value = "";
@@ -354,6 +384,8 @@ const resetForm = () => {
   newImageUrl.value = "";
   categoryId.value = "";
   tagId.value = "";
+  additionalCategories.value = [];
+  additionalTags.value = [];
   isSubmitting.value = false;
   errors.value = {};
 };
